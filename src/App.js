@@ -1,12 +1,13 @@
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
-import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Link, Redirect } from 'react-router-dom';
 import * as firebase from 'firebase';
 
 const Links = () => (
   <nav className="nav">
     <Link className="nav-link" to="/">Home</Link>
     <Link className="nav-link" to="/about">About</Link>
+    <Link className="nav-link" to="/form">Form</Link>
     <Link className="nav-link" to="/contact">Contact</Link>
   </nav>
 );
@@ -29,6 +30,35 @@ class TodoList extends Component {
   }
 }
 
+class TodoForm extends Component {
+  constructor() {
+    super();
+    this.state = {
+      reDirect: false 
+    }
+  }
+
+  submitForm = (e) => {
+    e.preventDefault();
+    this.setState({reDirect: true});
+    this.props.handleSubmit(e);
+  }
+
+  render() {
+    const { reDirect } = this.state;
+
+    return (
+    <div>
+    <form onSubmit={ this.submitForm }>
+        <input onChange={ this.props.handleChange } value={ this.props.text } />
+        <button>{ 'Add #' + (this.props.items.length + 1) }</button>
+    </form>
+    {reDirect && (<Redirect to={'/'}/>)}
+    </div>
+  );
+}
+}
+
 class App extends Component {
     constructor() {
     super();
@@ -36,8 +66,8 @@ class App extends Component {
       items: [],
       text: ''
     }
-    // this.handleChange = this.handleChange.bind(this);
-    // this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   componentDidMount() {
@@ -56,6 +86,24 @@ class App extends Component {
     }.bind(this));
   }
 
+  handleChange(event) {
+       this.setState({text: event.target.value});
+       console.log('Change');
+      }
+
+  handleSubmit(event) {
+    event.preventDefault();
+    if (this.state.text && this.state.text.trim().length !== 0) {
+      this.firebaseRef.push({
+        text: this.state.text
+      });
+      this.setState({
+        text: ''
+      });
+    }
+  }
+
+
   removeItem(key) {
     var firebaseRef = firebase.database().ref('items');
     firebaseRef.child(key).remove();
@@ -69,6 +117,12 @@ class App extends Component {
          <Route exact path="/" render={() => <TodoList 
             items={this.state.items}
             removeItem={this.removeItem}
+          />} />
+         <Route path="/form" render={() => <TodoForm 
+            handleChange={this.handleChange}
+            handleSubmit={this.handleSubmit}
+            items={this.state.items}
+            text={this.state.text}
           />} />
          <Route path="/about" render={() => <h1>About</h1>} />
          <Route path="/contact" render={() => <h1>Contact</h1>} />
