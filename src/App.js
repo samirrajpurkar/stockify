@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-import ReactDOM from 'react-dom';
 import { BrowserRouter as Router, Route, Link, Redirect } from 'react-router-dom';
 import * as firebase from 'firebase';
 
@@ -9,8 +8,21 @@ const Links = () => (
     <Link className="nav-link" to="/about">About</Link>
     <Link className="nav-link" to="/form">Form</Link>
     <Link className="nav-link" to="/contact">Contact</Link>
+    <Link className="nav-link" to="/private">Private</Link>
+    <Link className="nav-link" to="/login">Login</Link>
   </nav>
 );
+
+class Login extends Component {
+  
+  static isPrivate = false;
+
+  render() {
+    return (
+      <h1>Login</h1>
+    );
+  }
+}
 
 class TodoList extends Component {
   render() {
@@ -57,6 +69,33 @@ class TodoForm extends Component {
     </div>
   );
 }
+}
+
+class Private extends Component {
+  static isPrivate = true;
+  render() {
+    return (
+      <h1>Private</h1>
+    );
+  }
+}
+// Mock authentication
+const isAuthenticated = () => false;
+
+const AuthRoute = ({
+  component,
+  ...props
+}) => {
+  const {isPrivate} = component;
+
+  if (isAuthenticated() === false) {
+    if (isPrivate === true) {
+      return <Redirect to={'/login'} />
+    }
+    if (isPrivate === false) {
+      return <Route {...props} component={component} />
+    }
+  }
 }
 
 class App extends Component {
@@ -126,6 +165,8 @@ class App extends Component {
           />} />
          <Route path="/about" render={() => <h1>About</h1>} />
          <Route path="/contact" render={() => <h1>Contact</h1>} />
+         <AuthRoute component={Private} path="/private" />
+         <AuthRoute component={Login} path="/login" />
        </div>
      </Router>
    );
